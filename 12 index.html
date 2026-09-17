@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truth or Dare Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #4a4a4a;
+    }
+
+    /* Setup Section */
+    .setup-section input {
+      width: 70%;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+
+    .setup-section button {
+      padding: 10px 15px;
+      border: none;
+      background: #764ba2;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .player-list {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .player-tag {
+      background: #e2e8f0;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+
+    .start-btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Game Section */
+    .game-section {
+      display: none;
+    }
+
+    .turn-display {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #764ba2;
+    }
+
+    .choice-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn-truth {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    .btn-dare {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    .btn-truth:hover { background: #2980b9; }
+    .btn-dare:hover { background: #c0392b; }
+
+    .card {
+      min-height: 120px;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+      font-size: 18px;
+      margin-bottom: 20px;
+      background: #fdfdfd;
+    }
+
+    .next-btn {
+      width: 100%;
+      padding: 12px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- SETUP SECTION -->
+    <div id="setup-section" class="setup-section">
+      <h1>Truth or Dare</h1>
+      <p>Add players to start the game!</p>
+      <div>
+        <input type="text" id="player-input" placeholder="Enter player name">
+        <button onclick="addPlayer()">Add</button>
+      </div>
+      <div class="player-list" id="player-list"></div>
+      <button class="start-btn" onclick="startGame()">Start Game</button>
+    </div>
+
+    <!-- GAME SECTION -->
+    <div id="game-section" class="game-section">
+      <div class="turn-display" id="turn-display">Player's Turn</div>
+      
+      <div class="choice-buttons">
+        <button class="btn-truth" onclick="getPrompt('truth')">TRUTH</button>
+        <button class="btn-dare" onclick="getPrompt('dare')">DARE</button>
+      </div>
+
+      <div class="card" id="card-text">
+        Choose Truth or Dare to get a challenge!
+      </div>
+
+      <button class="next-btn" onclick="nextTurn()">Next Player</button>
+    </div>
+  </div>
+
+  <script>
+    // DATA: Questions and Dares
+    const truths = [
+      "What is your biggest fear?",
+      "What is the most embarrassing thing you've ever done?",
+      "What is a secret you've never told anyone?",
+      "Who was your first crush?",
+      "What is the biggest lie you've ever told?",
+      "What is your worst habit?",
+      "If you could trade lives with anyone here, who would it be?",
+      "What is something you're glad your parents don't know about you?"
+    ];
+
+    const dares = [
+      "Kiss her right now.",
+      "Let another player send a text from your phone.",
+      "Sing the chorus of your favorite song out loud.",
+      "Do your best impression of someone in this room.",
+      "Talk in an accent chosen by the group for 3 turns.",
+      "Let someone redraw your eyebrows with a washable marker.",
+      "Show the last photo in your phone gallery.",
+      "Speak without using the letter 'E' for the next minute."
+    ];
+
+    let players = [];
+    let currentPlayerIndex = 0;
+
+    function addPlayer() {
+      const input = document.getElementById('player-input');
+      const name = input.value.trim();
+      
+      if (name !== "") {
+        players.push(name);
+        input.value = "";
+        renderPlayers();
+      }
+    }
+
+    function renderPlayers() {
+      const listContainer = document.getElementById('player-list');
+      listContainer.innerHTML = "";
+      players.forEach(player => {
+        const tag = document.createElement('span');
+        tag.className = 'player-tag';
+        tag.innerText = player;
+        listContainer.appendChild(tag);
+      });
+    }
+
+    function startGame() {
+      if (players.length === 0) {
+        alert("Please add at least one player!");
+        return;
+      }
+      document.getElementById('setup-section').style.display = 'none';
+      document.getElementById('game-section').style.display = 'block';
+      updateTurnDisplay();
+    }
+
+    function updateTurnDisplay() {
+      const currentName = players[currentPlayerIndex];
+      document.getElementById('turn-display').innerText = `${currentName}'s Turn!`;
+      document.getElementById('card-text').innerText = "Choose Truth or Dare!";
+    }
+
+    function getPrompt(type) {
+      let prompt = "";
+      if (type === 'truth') {
+        const randomIndex = Math.floor(Math.random() * truths.length);
+        prompt = truths[randomIndex];
+      } else {
+        const randomIndex = Math.floor(Math.random() * dares.length);
+        prompt = dares[randomIndex];
+      }
+      document.getElementById('card-text').innerText = prompt;
+    }
+
+    function nextTurn() {
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      updateTurnDisplay();
+    }
+  </script>
+</body>
+</html>
